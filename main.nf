@@ -9,7 +9,7 @@ Channel.fromPath("${params.vcf_dir}/*.vcf.gz")
 
 ch_files2 = ch_files.take(params.file_count)
 
-process bcftools_sort {
+process vcf_header {
     label 'bcftools'
     publishDir "${params.outdir}", mode: 'copy'
 
