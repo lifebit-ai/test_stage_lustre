@@ -20,8 +20,15 @@ process vcf_header {
     file("${ingvcf.simpleName}.head.txt") into ch_header_files
 
     script:
+    if (params.delete_input)
+    """
+    bcftools view -h ${ingvcf} > ${ingvcf.simpleName}.head.txt
+    
+    # delete input file to save disk size
+    rm ${ingvcf}
+    """
+    else
     """
     bcftools view -h ${ingvcf} > ${ingvcf.simpleName}.head.txt
     """
-
 }
