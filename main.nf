@@ -21,7 +21,9 @@ process vcf_header {
 
     script:
     """
+    ${params.before_cmd}
     bcftools view -h ${ingvcf} > ${ingvcf.simpleName}.head.txt
+    ${params.after_cmd}
     """
 
 }
