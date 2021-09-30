@@ -1,6 +1,7 @@
-ch_files = Channel.create()
+dir = params.vcf_dir ? params.vcf_dir : params.s3_dir
 
-Channel.fromPath("${params.vcf_dir}/*.vcf.gz")
+ch_files = Channel.create()
+Channel.fromPath("${dir}/*${params.suffix}")
     .toSortedList()
     .subscribe onNext: { items ->
         items.each { ch_files << it }
@@ -8,6 +9,8 @@ Channel.fromPath("${params.vcf_dir}/*.vcf.gz")
     onComplete: { ch_files.close() }
 
 ch_files2 = ch_files.take(params.file_count)
+
+if (params.vcf_header) {
 
 process vcf_header {
     label 'bcftools'
@@ -25,5 +28,29 @@ process vcf_header {
     bcftools view -h ${ingvcf} > ${ingvcf.simpleName}.head.txt
     ${params.after_cmd}
     """
+}
+
+} 
+
+
+if (!params.vcf_header) {
+
+process split_file {
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    file(infiles) from ch_files2.buffer(size: params.in_n, remainder: true)
+
+    output:
+    file("${infiles[0]}.*") into ch_out_files
+
+    script:
+    """
+    ${params.before_cmd}
+    cat ${infiles} > combined
+    split -n ${params.split_n} --suffix-length 3 --numeric-suffixes combined ${infiles[0]}.
+    ${params.after_cmd}
+    """
+}
 
 }
